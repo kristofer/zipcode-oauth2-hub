@@ -1,0 +1,113 @@
+{
+  "realm": "zipcodewilmington",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 30,
+  "roles": {
+    "realm": [
+      {
+        "name": "instructor",
+        "description": "Instructor role with full access to cohort management",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "student",
+        "description": "Student role with access to own cohort resources",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "admin",
+        "description": "Administrator role with full system access",
+        "composite": true,
+        "composites": {
+          "realm": ["instructor", "student"]
+        },
+        "clientRole": false
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "productivity-app-backend",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "your-client-secret",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": true,
+      "protocol": "openid-connect",
+      "bearerOnly": false,
+      "publicClient": false,
+      "attributes": {
+        "use.refresh.tokens": "true",
+        "access.token.lifespan": "900",
+        "refresh.token.max.reuse": "0"
+      },
+      "authorizationSettings": {
+        "allowRemoteResourceManagement": true,
+        "policyEnforcementMode": "ENFORCING",
+        "decisionStrategy": "UNANIMOUS"
+      }
+    },
+    {
+      "clientId": "productivity-app-frontend",
+      "enabled": true,
+      "clientAuthenticatorType": "public",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:3001/*",
+        "http://localhost:3002/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "attributes": {
+    "_browser_header.contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self'; object-src 'none';"
+  },
+  "userAttributes": [
+    {
+      "name": "cohortId",
+      "displayName": "Cohort ID",
+      "validations": {
+        "length": {
+          "min": "3",
+          "max": "50"
+        }
+      }
+    },
+    {
+      "name": "graduationDate",
+      "displayName": "Expected Graduation Date",
+      "validations": {}
+    }
+  ]
+}
