@@ -1,0 +1,24 @@
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /health                   --> main.main.func2 (4 handlers)
+[GIN-debug] GET    /auth/login               --> main.main.func3 (4 handlers)
+[GIN-debug] GET    /api/user/info            --> main.main.(*AuthGateway).GetUserInfo.func6 (5 handlers)
+[GIN-debug] GET    /api/instructor/cohorts   --> main.getCohorts (6 handlers)
+[GIN-debug] POST   /api/instructor/cohorts   --> main.createCohort (6 handlers)
+[GIN-debug] GET    /api/instructor/students  --> main.getStudents (6 handlers)
+[GIN-debug] GET    /api/student/assignments  --> main.getAssignments (6 handlers)
+[GIN-debug] POST   /api/student/submissions  --> main.createSubmission (6 handlers)
+[GIN-debug] GET    /api/admin/users          --> main.getAllUsers (6 handlers)
+[GIN-debug] PUT    /api/admin/users/:id      --> main.updateUser (6 handlers)
+2025/11/18 11:21:41 Starting API Gateway on port 8081
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :8081
+[GIN] 2025/11/18 - 11:21:48 | 200 |    1.319292ms |             ::1 | GET      "/health"
+[GIN] 2025/11/18 - 11:24:32 | 200 |    2.075333ms |             ::1 | GET      "/health"
+[GIN] 2025/11/18 - 11:24:32 | 404 |       5.958µs |             ::1 | GET      "/favicon.ico"
+[GIN] 2025/11/18 - 14:14:41 | 200 |       3.317ms |             ::1 | GET      "/health"

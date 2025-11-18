@@ -20,6 +20,10 @@ The ZipCode OAuth2 Hub enables educational applications to:
 - **[Example Apps](./examples/)** - Working example applications for students and instructors
 - **[API Specification](./API_SPECIFICATION.md)** - Complete API reference with examples
 
+### For Administrators
+- **[Administrator Guide](./AdminGuide/)** ⭐ - Complete administrator documentation
+- **[Keycloak User Setup](./AdminGuide/KEYCLOAK_USER_SETUP.md)** - User management and configuration guide
+
 ### Core Documentation
 - **[OAuth2 Architecture](./OAUTH2_ARCHITECTURE.md)** - System architecture and educational-specific design
 - **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** - Production deployment instructions

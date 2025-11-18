@@ -92,22 +92,5 @@
   ],
   "attributes": {
     "_browser_header.contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self'; object-src 'none';"
-  },
-  "userAttributes": [
-    {
-      "name": "cohortId",
-      "displayName": "Cohort ID",
-      "validations": {
-        "length": {
-          "min": "3",
-          "max": "50"
-        }
-      }
-    },
-    {
-      "name": "graduationDate",
-      "displayName": "Expected Graduation Date",
-      "validations": {}
-    }
-  ]
+  }
 }

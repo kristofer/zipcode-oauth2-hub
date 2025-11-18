@@ -34,14 +34,14 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
       - "8080:8080"
-    command: start-dev
+    command: start-dev --import-realm
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - zipcode-auth-network
     volumes:
-      - ./config/keycloak/realm-export.json:/opt/keycloak/data/import/realm.json
+      - ../../config/keycloak/realm-export.json:/opt/keycloak/data/import/realm.json
 
   redis:
     image: redis:7-alpine

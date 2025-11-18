@@ -1,21 +1,19 @@
 package main
 
 import (
-    "context"
-    "encoding/json"
-    "fmt"
-    "html/template"
-    "log"
-    "net/http"
-    "os"
+	"context"
+	"html/template"
+	"log"
+	"net/http"
+	"os"
 
-    "github.com/gin-gonic/gin"
-    "github.com/zipcodewilmington/oauth2-hub/pkg/client"
+	"github.com/gin-gonic/gin"
+	"github.com/zipcodewilmington/oauth2-hub/pkg/client"
 )
 
 var (
-    ssoClient     *client.ZipSSOClient
-    pkceChallenge *client.PKCEChallenge
+	ssoClient     *client.ZipSSOClient
+	pkceChallenge *client.PKCEChallenge
 )
 
 const htmlTemplate = `
@@ -111,177 +109,177 @@ const htmlTemplate = `
 `
 
 type PageData struct {
-    User        *client.UserInfo
-    Assignments []Assignment
+	User        *client.UserInfo
+	Assignments []Assignment
 }
 
 type Assignment struct {
-    Title   string
-    DueDate string
-    Status  string
+	Title   string
+	DueDate string
+	Status  string
 }
 
 func main() {
-    // Initialize OAuth2 client
-    authServerURL := os.Getenv("KEYCLOAK_URL")
-    if authServerURL == "" {
-        authServerURL = "http://localhost:8080/realms/zipcodewilmington"
-    }
-    
-    clientID := os.Getenv("CLIENT_ID")
-    if clientID == "" {
-        clientID = "productivity-app-frontend"
-    }
-    
-    redirectURI := os.Getenv("REDIRECT_URI")
-    if redirectURI == "" {
-        redirectURI = "http://localhost:3000/callback"
-    }
-    
-    ssoClient = client.NewZipSSOClient(authServerURL, clientID, "", redirectURI)
-    
-    // Setup routes
-    r := gin.Default()
-    
-    // Parse HTML template
-    tmpl := template.Must(template.New("index").Parse(htmlTemplate))
-    
-    // Session middleware (simplified - use proper session management in production)
-    r.Use(func(c *gin.Context) {
-        c.Set("template", tmpl)
-        c.Next()
-    })
-    
-    // Routes
-    r.GET("/", handleHome)
-    r.GET("/login", handleLogin)
-    r.GET("/callback", handleCallback)
-    r.GET("/logout", handleLogout)
-    r.GET("/api/assignments", handleGetAssignments)
-    
-    port := os.Getenv("APP_PORT")
-    if port == "" {
-        port = "3000"
-    }
-    
-    log.Printf("Starting Productivity App on port %s", port)
-    r.Run(":" + port)
+	// Initialize OAuth2 client
+	authServerURL := os.Getenv("KEYCLOAK_URL")
+	if authServerURL == "" {
+		authServerURL = "http://localhost:8080/realms/zipcodewilmington"
+	}
+
+	clientID := os.Getenv("CLIENT_ID")
+	if clientID == "" {
+		clientID = "productivity-app-frontend"
+	}
+
+	redirectURI := os.Getenv("REDIRECT_URI")
+	if redirectURI == "" {
+		redirectURI = "http://localhost:3000/callback"
+	}
+
+	ssoClient = client.NewZipSSOClient(authServerURL, clientID, "", redirectURI)
+
+	// Setup routes
+	r := gin.Default()
+
+	// Parse HTML template
+	tmpl := template.Must(template.New("index").Parse(htmlTemplate))
+
+	// Session middleware (simplified - use proper session management in production)
+	r.Use(func(c *gin.Context) {
+		c.Set("template", tmpl)
+		c.Next()
+	})
+
+	// Routes
+	r.GET("/", handleHome)
+	r.GET("/login", handleLogin)
+	r.GET("/callback", handleCallback)
+	r.GET("/logout", handleLogout)
+	r.GET("/api/assignments", handleGetAssignments)
+
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "3000"
+	}
+
+	log.Printf("Starting Productivity App on port %s", port)
+	r.Run(":" + port)
 }
 
 func handleHome(c *gin.Context) {
-    tmpl := c.MustGet("template").(*template.Template)
-    
-    // Check if user is logged in (simplified - use proper session management)
-    tokenCookie, err := c.Cookie("access_token")
-    if err != nil || tokenCookie == "" {
-        c.Header("Content-Type", "text/html")
-        tmpl.Execute(c.Writer, PageData{})
-        return
-    }
-    
-    // Get user info
-    userInfo, err := ssoClient.GetUserInfo(context.Background(), tokenCookie)
-    if err != nil {
-        c.SetCookie("access_token", "", -1, "/", "", false, true)
-        c.Redirect(http.StatusTemporaryRedirect, "/")
-        return
-    }
-    
-    // Mock assignments (in real app, fetch from API)
-    assignments := []Assignment{
-        {Title: "OAuth2 Implementation Project", DueDate: "2024-12-15", Status: "In Progress"},
-        {Title: "Microservices Architecture Quiz", DueDate: "2024-12-10", Status: "Not Started"},
-        {Title: "Go Concurrency Patterns", DueDate: "2024-12-20", Status: "Completed"},
-    }
-    
-    c.Header("Content-Type", "text/html")
-    tmpl.Execute(c.Writer, PageData{
-        User:        userInfo,
-        Assignments: assignments,
-    })
+	tmpl := c.MustGet("template").(*template.Template)
+
+	// Check if user is logged in (simplified - use proper session management)
+	tokenCookie, err := c.Cookie("access_token")
+	if err != nil || tokenCookie == "" {
+		c.Header("Content-Type", "text/html")
+		tmpl.Execute(c.Writer, PageData{})
+		return
+	}
+
+	// Get user info
+	userInfo, err := ssoClient.GetUserInfo(context.Background(), tokenCookie)
+	if err != nil {
+		c.SetCookie("access_token", "", -1, "/", "", false, true)
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+		return
+	}
+
+	// Mock assignments (in real app, fetch from API)
+	assignments := []Assignment{
+		{Title: "OAuth2 Implementation Project", DueDate: "2024-12-15", Status: "In Progress"},
+		{Title: "Microservices Architecture Quiz", DueDate: "2024-12-10", Status: "Not Started"},
+		{Title: "Go Concurrency Patterns", DueDate: "2024-12-20", Status: "Completed"},
+	}
+
+	c.Header("Content-Type", "text/html")
+	tmpl.Execute(c.Writer, PageData{
+		User:        userInfo,
+		Assignments: assignments,
+	})
 }
 
 func handleLogin(c *gin.Context) {
-    // Generate PKCE challenge
-    var err error
-    pkceChallenge, err = ssoClient.GeneratePKCE()
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate PKCE"})
-        return
-    }
-    
-    // Generate random state (simplified - use secure random in production)
-    state := "random-state-123"
-    c.SetCookie("oauth_state", state, 600, "/", "", false, true)
-    
-    // Redirect to auth server
-    authURL := ssoClient.GetAuthURL(state, pkceChallenge, []string{"openid", "profile", "email"})
-    c.Redirect(http.StatusTemporaryRedirect, authURL)
+	// Generate PKCE challenge
+	var err error
+	pkceChallenge, err = ssoClient.GeneratePKCE()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate PKCE"})
+		return
+	}
+
+	// Generate random state (simplified - use secure random in production)
+	state := "random-state-123"
+	c.SetCookie("oauth_state", state, 600, "/", "", false, true)
+
+	// Redirect to auth server
+	authURL := ssoClient.GetAuthURL(state, pkceChallenge, []string{"openid", "profile", "email"})
+	c.Redirect(http.StatusTemporaryRedirect, authURL)
 }
 
 func handleCallback(c *gin.Context) {
-    // Verify state
-    state := c.Query("state")
-    stateCookie, _ := c.Cookie("oauth_state")
-    if state != stateCookie {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid state"})
-        return
-    }
-    
-    // Get authorization code
-    code := c.Query("code")
-    if code == "" {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "No authorization code"})
-        return
-    }
-    
-    // Exchange code for tokens
-    tokens, err := ssoClient.ExchangeCode(context.Background(), code, pkceChallenge)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Token exchange failed"})
-        return
-    }
-    
-    // Store tokens (simplified - use secure storage in production)
-    c.SetCookie("access_token", tokens.AccessToken, tokens.ExpiresIn, "/", "", false, true)
-    c.SetCookie("refresh_token", tokens.RefreshToken, 86400*30, "/", "", false, true)
-    c.SetCookie("id_token", tokens.IDToken, tokens.ExpiresIn, "/", "", false, true)
-    
-    // Clear state cookie
-    c.SetCookie("oauth_state", "", -1, "/", "", false, true)
-    
-    // Redirect to home
-    c.Redirect(http.StatusTemporaryRedirect, "/")
+	// Verify state
+	state := c.Query("state")
+	stateCookie, _ := c.Cookie("oauth_state")
+	if state != stateCookie {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid state"})
+		return
+	}
+
+	// Get authorization code
+	code := c.Query("code")
+	if code == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No authorization code"})
+		return
+	}
+
+	// Exchange code for tokens
+	tokens, err := ssoClient.ExchangeCode(context.Background(), code, pkceChallenge)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token exchange failed"})
+		return
+	}
+
+	// Store tokens (simplified - use secure storage in production)
+	c.SetCookie("access_token", tokens.AccessToken, tokens.ExpiresIn, "/", "", false, true)
+	c.SetCookie("refresh_token", tokens.RefreshToken, 86400*30, "/", "", false, true)
+	c.SetCookie("id_token", tokens.IDToken, tokens.ExpiresIn, "/", "", false, true)
+
+	// Clear state cookie
+	c.SetCookie("oauth_state", "", -1, "/", "", false, true)
+
+	// Redirect to home
+	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
 func handleLogout(c *gin.Context) {
-    // Get ID token for logout
-    idToken, _ := c.Cookie("id_token")
-    
-    // Clear cookies
-    c.SetCookie("access_token", "", -1, "/", "", false, true)
-    c.SetCookie("refresh_token", "", -1, "/", "", false, true)
-    c.SetCookie("id_token", "", -1, "/", "", false, true)
-    
-    // Redirect to Keycloak logout
-    logoutURL := ssoClient.Logout(context.Background(), idToken, "http://localhost:3000")
-    c.Redirect(http.StatusTemporaryRedirect, logoutURL)
+	// Get ID token for logout
+	idToken, _ := c.Cookie("id_token")
+
+	// Clear cookies
+	c.SetCookie("access_token", "", -1, "/", "", false, true)
+	c.SetCookie("refresh_token", "", -1, "/", "", false, true)
+	c.SetCookie("id_token", "", -1, "/", "", false, true)
+
+	// Redirect to Keycloak logout
+	logoutURL := ssoClient.Logout(context.Background(), idToken, "http://localhost:3000")
+	c.Redirect(http.StatusTemporaryRedirect, logoutURL)
 }
 
 func handleGetAssignments(c *gin.Context) {
-    // Check authentication
-    tokenCookie, err := c.Cookie("access_token")
-    if err != nil || tokenCookie == "" {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
-        return
-    }
-    
-    // In a real app, this would call the resource server with the access token
-    // For now, return mock data
-    assignments := []Assignment{
-        {Title: "OAuth2 Implementation Project", DueDate: "2024-12-15", Status: "In Progress"},
-        {Title: "Microservices Architecture Quiz", DueDate: "2024-12-10", Status: "Not Started"},
-    }
-    
-    c.JSON(http.StatusOK, assignments)
+	// Check authentication
+	tokenCookie, err := c.Cookie("access_token")
+	if err != nil || tokenCookie == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	// In a real app, this would call the resource server with the access token
+	// For now, return mock data
+	assignments := []Assignment{
+		{Title: "OAuth2 Implementation Project", DueDate: "2024-12-15", Status: "In Progress"},
+		{Title: "Microservices Architecture Quiz", DueDate: "2024-12-10", Status: "Not Started"},
+	}
+
+	c.JSON(http.StatusOK, assignments)
 }
