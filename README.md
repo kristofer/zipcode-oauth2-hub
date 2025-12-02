@@ -2,12 +2,7 @@
 
 **ZipCode OAuth2 Hub** is a production-ready OAuth2/OpenID Connect authentication and authorization microservice designed specifically for educational environments. Built with Go and Keycloak, it provides secure single sign-on (SSO), fine-grained authorization policies, and educational-specific access controls for ZipCode Wilmington's ecosystem of productivity applications.
 
-Currently, it uses generic Linux production host. It needs to change to:
-
-- use a AWS EC2 host
-- use a postgres database on a non-standard port
-- use CADDY as reverse-proxy instead of nginx
-- _kyounger, Nov 2025_
+Starting to use Issues to tracks some changes.  _kristofer, 2 dec 2025_
 
 ## 🎯 Overview
 
