@@ -1,104 +1,146 @@
-# docker-compose.production.yml
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
-    container_name: zipcode-postgres
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./config/postgresql/init:/docker-entrypoint-initdb.d
-    networks:
-      - zipcode-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  redis:
-    image: redis:7-alpine
-    container_name: zipcode-redis
-    command: redis-server /usr/local/etc/redis/redis.conf
-    volumes:
-      - redis_data:/data
-      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
-    networks:
-      - zipcode-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
+  # Keycloak Authentication Server
   keycloak:
-    image: quay.io/keycloak/keycloak:23.0
-    container_name: zipcode-keycloak
+    image: quay.io/keycloak/keycloak:22.0
+    container_name: zipcode-keycloak-prod
+    restart: unless-stopped
     environment:
+      # Database
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres/${DB_NAME}
+      KC_DB_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require
       KC_DB_USERNAME: ${DB_USER}
       KC_DB_PASSWORD: ${DB_PASSWORD}
-      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}
-      KC_HTTP_ENABLED: true
-      KC_PROXY: edge
+      
+      # Hostname and SSL
+      KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT}
+      KC_HTTP_ENABLED: ${KC_HTTP_ENABLED}
+      KC_HOSTNAME_STRICT_HTTPS: ${KC_HOSTNAME_STRICT_HTTPS}
+      KC_PROXY: ${KC_PROXY}
+      
+      # Admin credentials
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      
+      # JVM Performance
+      JAVA_OPTS: ${JAVA_OPTS}
+      
+    command: start --import-realm --optimized
     ports:
-      - "8080:8080"
+      - "127.0.0.53:9202:9202"  # Only bind to localhost
     volumes:
-      - ./config/keycloak/realm-export.json:/opt/keycloak/data/import/realm.json
-      - ./config/keycloak/themes:/opt/keycloak/themes
-    command: start --import-realm
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - ./config/keycloak/realm-export.json:/opt/keycloak/data/import/realm.json:ro
+      - keycloak_data:/opt/keycloak/data
+      - /var/log/zipcode-oauth2:/var/log/keycloak
     networks:
-      - zipcode-network
-    restart: unless-stopped
+      - zipcode-auth-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:9202/health/ready || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 90s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  gateway:
+  # API Gateway
+  api-gateway:
     build:
       context: .
-      dockerfile: Dockerfile.production
-      args:
-        VERSION: ${VERSION}
-    container_name: zipcode-gateway
-    environment:
-      KEYCLOAK_URL: http://keycloak:8080
-      REDIS_URL: redis://redis:6379
-      GATEWAY_PORT: 8081
-    ports:
-      - "8081:8081"
-    depends_on:
-      keycloak:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - zipcode-network
+      dockerfile: cmd/gateway/Dockerfile
+    container_name: zipcode-gateway-prod
     restart: unless-stopped
+    environment:
+      - KEYCLOAK_URL=${KEYCLOAK_URL}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM}
+      - GATEWAY_PORT=${GATEWAY_PORT}
+      - GATEWAY_HOST=${GATEWAY_HOST}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - METRICS_PORT=${METRICS_PORT}
+    ports:
+      - "127.0.0.53:9201:9201"  # Only bind to localhost
+    depends_on:
+      - keycloak
+    networks:
+      - zipcode-auth-network
+    volumes:
+      - /var/log/zipcode-oauth2:/var/log/gateway
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:9201/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis Cache (if not using external)
+  redis:
+    image: redis:7-alpine
+    container_name: zipcode-redis-prod
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    ports:
+      - "127.0.0.53:6379:6379"
+    volumes:
+      - redis_prod_data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - zipcode-auth-network
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --pass ${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Example Application (Production)
+  student-portal:
+    build:
+      context: .
+      dockerfile: examples/productivity-app1/Dockerfile
+    container_name: zipcode-portal-prod
+    restart: unless-stopped
+    environment:
+      - KEYCLOAK_URL=${KEYCLOAK_URL}
+      - CLIENT_ID=${CLIENT_ID}
+      - REDIRECT_URI=${REDIRECT_URI}
+      - APP_PORT=${APP_PORT}
+      - NODE_ENV=${NODE_ENV}
+    ports:
+      - "127.0.0.53:9203:9203"
+    depends_on:
+      - api-gateway
+    networks:
+      - zipcode-auth-network
+    volumes:
+      - /var/log/zipcode-oauth2:/var/log/portal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9203 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
 
 volumes:
-  postgres_data:
-  redis_data:
+  keycloak_data:
+    driver: local
+  redis_prod_data:
+    driver: local
 
 networks:
-  zipcode-network:
+  zipcode-auth-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
