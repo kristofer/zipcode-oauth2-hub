@@ -74,7 +74,7 @@ const htmlTemplate = `
 <body>
     <div class="container">
         <h1>ZipCode Wilmington - Student Portal</h1>
-        
+
         {{if .User}}
             <div class="user-info">
                 <h2>Welcome, {{.User.Name}}!</h2>
@@ -83,7 +83,7 @@ const htmlTemplate = `
                 <p><strong>Cohort:</strong> {{.User.CohortID}}</p>
                 <p><strong>Roles:</strong> {{range .User.Roles}}{{.}} {{end}}</p>
             </div>
-            
+
             <div class="assignments">
                 <h3>Your Assignments</h3>
                 {{range .Assignments}}
@@ -96,7 +96,7 @@ const htmlTemplate = `
                     <p>No assignments found.</p>
                 {{end}}
             </div>
-            
+
             <br>
             <a href="/logout" class="button logout">Logout</a>
         {{else}}
@@ -159,7 +159,7 @@ func main() {
 
 	port := os.Getenv("APP_PORT")
 	if port == "" {
-		port = "3000"
+		port = "9204"
 	}
 
 	log.Printf("Starting Productivity App on port %s", port)
