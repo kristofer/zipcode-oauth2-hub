@@ -9,7 +9,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the entire project (needed for shared packages/imports)
+# Copy the entire project
 COPY . .
 
 # Build the productivity-app1 portal
@@ -31,18 +31,8 @@ WORKDIR /app
 # Copy binary from builder
 COPY --from=builder /app/portal-app .
 
-# Copy static assets if they exist (templates, css, js, etc.)
-COPY --from=builder /app/examples/productivity-app1/static ./static 2>/dev/null || true
-COPY --from=builder /app/examples/productivity-app1/templates ./templates 2>/dev/null || true
-COPY --from=builder /app/examples/productivity-app1/assets ./assets 2>/dev/null || true
-COPY --from=builder /app/examples/productivity-app1/public ./public 2>/dev/null || true
-
 # Expose the application port
 EXPOSE 9204
-
-# Health check endpoint
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:9204/health || exit 1
 
 # Run the application
 CMD ["./portal-app"]
