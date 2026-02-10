@@ -69,7 +69,7 @@ services:
   gateway:
     build:
       context: .
-      dockerfile: Dockerfile.production
+      dockerfile: cmd/gateway/Dockerfile.production
       args:
         VERSION: ${VERSION}
     container_name: zipcode-gateway
