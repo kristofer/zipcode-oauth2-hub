@@ -112,7 +112,7 @@ services:
     container_name: zipcode-portal-productivity-app1
     environment:
       # OAuth2/Keycloak Configuration
-      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_URL: https://auth.zipcode.rocks # FQDN for browser access
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-zipcodewilmington}
       CLIENT_ID: ${CLIENT_ID}
       CLIENT_SECRET: ${CLIENT_SECRET}
