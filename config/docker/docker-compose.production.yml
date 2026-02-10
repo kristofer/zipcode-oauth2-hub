@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./config/postgresql/init:/docker-entrypoint-initdb.d
+      - ../../config/postgresql/init:/docker-entrypoint-initdb.d # Fixed path
     networks:
       - zipcode-network
     restart: unless-stopped
@@ -25,7 +25,7 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
       - redis_data:/data
-      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ../../config/redis/redis.conf:/usr/local/etc/redis/redis.conf # Fixed path
     networks:
       - zipcode-network
     restart: unless-stopped
@@ -44,15 +44,15 @@ services:
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
       KC_HOSTNAME: auth.zipcode.rocks
-      KC_HTTP_ENABLED: null
+      KC_HTTP_ENABLED: "true" # Fixed: was null, should be "true"
       KC_PROXY: edge
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     ports:
       - "9202:8080"
     volumes:
-      - ./config/keycloak/realm-export.json:/opt/keycloak/data/import/realm.json
-      - ./config/keycloak/themes:/opt/keycloak/themes
+      - ../../config/keycloak/realm-export.json:/opt/keycloak/data/import/realm.json # Fixed path
+      - ../../config/keycloak/themes:/opt/keycloak/themes # Fixed path
     command: start --import-realm
     depends_on:
       postgres:
@@ -68,10 +68,10 @@ services:
 
   gateway:
     build:
-      context: .
+      context: ../.. # Fixed: go up to project root
       dockerfile: cmd/gateway/Dockerfile.production
       args:
-        VERSION: ${VERSION}
+        VERSION: ${VERSION:-dev}
     container_name: zipcode-gateway
     environment:
       KEYCLOAK_URL: http://keycloak:8080
@@ -103,11 +103,10 @@ services:
 
   productivity-app1:
     build:
-      context: .
-      dockerfile: Dockerfile.portal
+      context: ../.. # Fixed: go up to project root
+      dockerfile: examples/productivity-app1/Dockerfile.production # Fixed: this is the dockerfile path, not PORTAL_PATH
       args:
-        PORTAL_PATH: examples/productivity-app1
-        VERSION: ${VERSION}
+        VERSION: ${VERSION:-dev}
     container_name: zipcode-portal-productivity-app1
     environment:
       # OAuth2/Keycloak Configuration
@@ -117,11 +116,9 @@ services:
       CLIENT_SECRET: ${CLIENT_SECRET}
       REDIRECT_URI: https://${PORTAL_DOMAIN}/callback
       JWT_ISSUER: https://${AUTH_DOMAIN}/realms/${KEYCLOAK_REALM:-zipcodewilmington}
-
       # Application Configuration
       APP_PORT: 9204
       GATEWAY_URL: http://gateway:9201
-
       # Portal-specific settings
       INSTITUTION_NAME: ${INSTITUTION_NAME}
       DOMAIN_NAME: ${DOMAIN_NAME}
